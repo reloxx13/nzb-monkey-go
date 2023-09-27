@@ -41,21 +41,11 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: 'go.mod' # Use the Go version specified in go.mod
-
-      - name: Cache Go dependencies and build cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Set Ref Name Variable
         run: |
           if [ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]; then
             # Use Git commit SHA as the reference when manually triggered
-            ref_name=$GITHUB_SHA
+            ref_name=${GITHUB_SHA::7}
           else
             ref_name=${{ github.ref_name }}
           fi
