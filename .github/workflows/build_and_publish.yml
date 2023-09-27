@@ -6,7 +6,7 @@ on:
       - created
 
 jobs:
-  build:
+  build-all-platforms:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,91 +16,75 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version-file: 'go.mod'
+          go-version-file: 'go.mod' # Use the Go version specified in go.mod
+
+      - name: Cache Go dependencies and build cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+        if: steps.go.outputs.added-cache == 'true'
 
       - name: Build for Linux (amd64)
         run: |
-          GOARCH=amd64 go build -x -o nzb-monkey-go-linux-amd64-v${{ github.ref_name }}
-        working-directory: .
+          mkdir -p builds/linux-amd64
+          GOARCH=amd64 GOOS=linux go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/linux-amd64/nzb-monkey-go
+          zip -j "nzb-monkey-go_${{ github.ref_name }}-amd64-linux.zip" builds/linux-amd64/nzb-monkey-go
+
+      - name: Build for macOS (amd64)
+        run: |
+          mkdir -p builds/macos-amd64
+          GOARCH=amd64 GOOS=darwin go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/macos-amd64/nzb-monkey-go
+          zip -j "nzb-monkey-go_${{ github.ref_name }}-amd64-darwin.zip" builds/macos-amd64/nzb-monkey-go
+
+      - name: Build for macOS (arm64)
+        run: |
+          mkdir -p builds/macos-arm64
+          GOARCH=arm64 GOOS=darwin go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/macos-arm64/nzb-monkey-go
+          zip -j "nzb-monkey-go_${{ github.ref_name }}-arm64-darwin.zip" builds/macos-arm64/nzb-monkey-go
+
+      - name: Build for Windows (amd64)
+        run: |
+          mkdir -p builds/windows-amd64
+          GOARCH=amd64 GOOS=windows go build -ldflags "-X main.version=${{ github.ref_name }}" -o builds/windows-amd64/nzb-monkey-go.exe
+          zip -j "nzb-monkey-go_${{ github.ref_name }}-amd64-windows.zip" builds/windows-amd64/nzb-monkey-go.exe
+
+      - name: Build for Linux (arm)
+        run: |
+          mkdir -p builds/linux-arm
+          GOARCH=arm GOOS=linux go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/linux-arm/nzb-monkey-go
+          zip -j "nzb-monkey-go_${{ github.ref_name }}-arm-linux.zip" builds/linux-arm/nzb-monkey-go
 
       - name: Build for Linux (arm64)
         run: |
-          GOARCH=arm64 go build -x -o nzb-monkey-go-linux-arm64-${{ github.ref_name }}
-        working-directory: .
+          mkdir -p builds/linux-arm64
+          GOARCH=arm64 GOOS=linux go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/linux-arm64/nzb-monkey-go
+          zip -j "nzb-monkey-go_${{ github.ref_name }}-arm64-linux.zip" builds/linux-arm64/nzb-monkey-go
 
       - name: Build for Linux (armv6)
         run: |
-          GOARCH=arm GOARM=6 go build -x -o nzb-monkey-go-linux-armv6-${{ github.ref_name }}
-        working-directory: .
+          mkdir -p builds/linux-armv6
+          GOARCH=arm GOARM=6 GOOS=linux go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/linux-armv6/nzb-monkey-go
+          zip -j "nzb-monkey-go_${{ github.ref_name }}-armv6-linux.zip" builds/linux-armv6/nzb-monkey-go
 
       - name: Build for Linux (armv7)
         run: |
-          GOARCH=arm GOARM=7 go build -x -o nzb-monkey-go-linux-armv7-${{ github.ref_name }}
-        working-directory: .
+          mkdir -p builds/linux-armv7
+          GOARCH=arm GOARM=7 GOOS=linux go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/linux-armv7/nzb-monkey-go
+          zip -j "nzb-monkey-go_${{ github.ref_name }}-armv7-linux.zip" builds/linux-armv7/nzb-monkey-go
 
-      - name: Build for macOS (darwin)
+      - name: Build for Linux (armv8)
         run: |
-          GOARCH=amd64 GOOS=darwin go build -x -o nzb-monkey-go-darwin-amd64-${{ github.ref_name }}
-        working-directory: .
-
-      - name: Create Debian Package (amd64)
-        run: |
-          mkdir -p nzb-monkey-go-deb-amd64/DEBIAN
-          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          echo "Package: nzb-monkey-go" >> nzb-monkey-go-deb-amd64/DEBIAN/control
-          echo "Version: ${VERSION}" >> nzb-monkey-go-deb-amd64/DEBIAN/control
-          echo "Maintainer: ${{ github.repository_owner }} <${{ github.repository_owner_email }}>" >> nzb-monkey-go-deb-amd64/DEBIAN/control
-          echo "Architecture: amd64" >> nzb-monkey-go-deb-amd64/DEBIAN/control
-          echo "Description: NZB Monkey Go - Golang version of the NZB Monkey with included NZB direct search" >> nzb-monkey-go-deb-amd64/DEBIAN/control
-          dpkg-deb --build nzb-monkey-go-deb-amd64 nzb-monkey-go-deb-amd64-${{ github.ref_name }}.deb
-        working-directory: .
-
-      - name: Create Debian Package (arm64)
-        run: |
-          mkdir -p nzb-monkey-go-deb-arm64/DEBIAN
-          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          echo "Package: nzb-monkey-go" >> nzb-monkey-go-deb-arm64/DEBIAN/control
-          echo "Version: ${VERSION}" >> nzb-monkey-go-deb-arm64/DEBIAN/control
-          echo "Maintainer: ${{ github.repository_owner }} <${{ github.repository_owner_email }}>" >> nzb-monkey-go-deb-arm64/DEBIAN/control
-          echo "Architecture: arm64" >> nzb-monkey-go-deb-arm64/DEBIAN/control
-          echo "Description: NZB Monkey Go - Golang version of the NZB Monkey with included NZB direct search" >> nzb-monkey-go-deb-arm64/DEBIAN/control
-          dpkg-deb --build nzb-monkey-go-deb-arm64 nzb-monkey-go-deb-arm64-${{ github.ref_name }}.deb
-        working-directory: .
-
-      - name: Create Debian Package (armv6)
-        run: |
-          mkdir -p nzb-monkey-go-deb-armv6/DEBIAN
-          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          echo "Package: nzb-monkey-go" >> nzb-monkey-go-deb-armv6/DEBIAN/control
-          echo "Version: ${VERSION}" >> nzb-monkey-go-deb-armv6/DEBIAN/control
-          echo "Maintainer: ${{ github.repository_owner }} <${{ github.repository_owner_email }}>" >> nzb-monkey-go-deb-armv6/DEBIAN/control
-          echo "Architecture: armv6" >> nzb-monkey-go-deb-armv6/DEBIAN/control
-          echo "Description: NZB Monkey Go - Golang version of the NZB Monkey with included NZB direct search" >> nzb-monkey-go-deb-armv6/DEBIAN/control
-          dpkg-deb --build nzb-monkey-go-deb-armv6 nzb-monkey-go-deb-armv6-${{ github.ref_name }}.deb
-        working-directory: .
-
-      - name: Create Debian Package (armv7)
-        run: |
-          mkdir -p nzb-monkey-go-deb-armv7/DEBIAN
-          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
-          echo "Package: nzb-monkey-go" >> nzb-monkey-go-deb-armv7/DEBIAN/control
-          echo "Version: ${VERSION}" >> nzb-monkey-go-deb-armv7/DEBIAN/control
-          echo "Maintainer: ${{ github.repository_owner }} <${{ github.repository_owner_email }}>" >> nzb-monkey-go-deb-armv7/DEBIAN/control
-          echo "Architecture: armv7" >> nzb-monkey-go-deb-armv7/DEBIAN/control
-          echo "Description: NZB Monkey Go - Golang version of the NZB Monkey with included NZB direct search" >> nzb-monkey-go-deb-armv7/DEBIAN/control
-          dpkg-deb --build nzb-monkey-go-deb-armv7 nzb-monkey-go-deb-armv7-${{ github.ref_name }}.deb
-        working-directory: .
+          mkdir -p builds/linux-armv8
+          GOARCH=arm64 GOOS=linux go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/linux-armv8/nzb-monkey-go
+          zip -j "nzb-monkey-go_${{ github.ref_name }}-armv8-linux.zip" builds/linux-armv8/nzb-monkey-go
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            nzb-monkey-go-linux-amd64-${{ github.ref_name }}
-            nzb-monkey-go-linux-arm64-${{ github.ref_name }}
-            nzb-monkey-go-linux-armv6-${{ github.ref_name }}
-            nzb-monkey-go-linux-armv7-${{ github.ref_name }}
-            nzb-monkey-go-darwin-amd64-${{ github.ref_name }}
-            nzb-monkey-go-deb-amd64-${{ github.ref_name }}.deb
-            nzb-monkey-go-deb-arm64-${{ github.ref_name }}.deb
-            nzb-monkey-go-deb-armv6-${{ github.ref_name }}.deb
-            nzb-monkey-go-deb-armv7-${{ github.ref_name }}.deb
+            nzb-monkey-go_*-*-*.zip
