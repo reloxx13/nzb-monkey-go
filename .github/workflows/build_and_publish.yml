@@ -6,7 +6,7 @@ on:
       - created
 
 jobs:
-  build-all-platforms:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -31,15 +31,15 @@ jobs:
             arch: arm64
           - name: Linux-armv6
             os: linux
-            arch: arm
+            arch: armv6
             variant: armv6
           - name: Linux-armv7
             os: linux
-            arch: arm
+            arch: armv7
             variant: armv7
           - name: Linux-armv8
             os: linux
-            arch: arm64
+            arch: armv8
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
