@@ -51,12 +51,20 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-
+      - name: Set Ref Name Variable
+        run: |
+          if [ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]; then
+            # Use Git commit SHA as the reference when manually triggered
+            ref_name=$GITHUB_SHA
+          else
+            ref_name=${{ github.ref_name }}
+          fi
+          echo "::set-env name=REF_NAME::${ref_name}"
       - name: Build for ${{ matrix.os-arch.name }}
         run: |
           mkdir -p builds/${{ matrix.os-arch.name }}
-          GOARCH=${{ matrix.os-arch.arch }} GOOS=${{ matrix.os-arch.os }} go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/${{ matrix.os-arch.name }}/nzb-monkey-go
-          zip -j "nzb-monkey-go_${{ github.ref_name }}-${{ matrix.os-arch.arch }}-${{ matrix.os-arch.os }}.zip" builds/${{ matrix.os-arch.name }}/nzb-monkey-go
+          GOARCH=${{ matrix.os-arch.arch }} GOOS=${{ matrix.os-arch.os }} go build -ldflags="-X main.version=${{ env.REF_NAME }}" -o builds/${{ matrix.os-arch.name }}/nzb-monkey-go
+          zip -j "nzb-monkey-go_${{ env.REF_NAME }}-${{ matrix.os-arch.arch }}-${{ matrix.os-arch.os }}.zip" builds/${{ matrix.os-arch.name }}/nzb-monkey-go
 
 #      - name: Upload Release Assets for ${{ matrix.os-arch.name }}
 #        uses: softprops/action-gh-release@v1
@@ -69,7 +77,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            nzb-monkey-go_*-*-*.zip
+            nzb-monkey-go_*.zip
 
       - name: Upload Zip Artifacts
         if: github.event_name == 'workflow_dispatch'
@@ -77,4 +85,4 @@ jobs:
         with:
           name: builds
           path: |
-            nzb-monkey-go_*-*-*.zip
+            nzb-monkey-go_*.zip
