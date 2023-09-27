@@ -6,7 +6,7 @@ on:
       - created
 
 jobs:
-  build:
+  build-all:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -17,29 +17,30 @@ jobs:
           - name: macOS-amd64
             os: darwin
             arch: amd64
+          - name: macOS-arm
+            os: darwin
+            arch: arm
           - name: macOS-arm64
             os: darwin
             arch: arm64
           - name: Windows-amd64
             os: windows
             arch: amd64
+          - name: Windows-386
+            os: windows
+            arch: 386 # 32bit
           - name: Linux-arm
             os: linux
             arch: arm
           - name: Linux-arm64
             os: linux
             arch: arm64
-          - name: Linux-armv6
-            os: linux
-            arch: armv6
-            variant: armv6
-          - name: Linux-armv7
-            os: linux
-            arch: armv7
-            variant: armv7
-          - name: Linux-armv8
-            os: linux
-            arch: armv8
+          - name: FreeBSD-amd64
+            os: freebsd
+            arch: amd64
+          - name: FreeBSD-arm
+            os: freebsd
+            arch: arm
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
