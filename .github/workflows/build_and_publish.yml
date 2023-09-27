@@ -8,7 +8,38 @@ on:
 jobs:
   build-all-platforms:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        os-arch:
+          - name: Linux-amd64
+            os: linux
+            arch: amd64
+          - name: macOS-amd64
+            os: darwin
+            arch: amd64
+          - name: macOS-arm64
+            os: darwin
+            arch: arm64
+          - name: Windows-amd64
+            os: windows
+            arch: amd64
+          - name: Linux-arm
+            os: linux
+            arch: arm
+          - name: Linux-arm64
+            os: linux
+            arch: arm64
+          - name: Linux-armv6
+            os: linux
+            arch: arm
+            variant: armv6
+          - name: Linux-armv7
+            os: linux
+            arch: arm
+            variant: armv7
+          - name: Linux-armv8
+            os: linux
+            arch: arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,63 +58,14 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-        if: steps.go.outputs.added-cache == 'true'
 
-      - name: Build for Linux (amd64)
+      - name: Build for ${{ matrix.os-arch.name }}
         run: |
-          mkdir -p builds/linux-amd64
-          GOARCH=amd64 GOOS=linux go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/linux-amd64/nzb-monkey-go
-          zip -j "nzb-monkey-go_${{ github.ref_name }}-amd64-linux.zip" builds/linux-amd64/nzb-monkey-go
+          mkdir -p builds/${{ matrix.os-arch.name }}
+          GOARCH=${{ matrix.os-arch.arch }} GOOS=${{ matrix.os-arch.os }} go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/${{ matrix.os-arch.name }}/nzb-monkey-go
+          zip -j "nzb-monkey-go_${{ github.ref_name }}-${{ matrix.os-arch.arch }}-${{ matrix.os-arch.os }}.zip" builds/${{ matrix.os-arch.name }}/nzb-monkey-go
 
-      - name: Build for macOS (amd64)
-        run: |
-          mkdir -p builds/macos-amd64
-          GOARCH=amd64 GOOS=darwin go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/macos-amd64/nzb-monkey-go
-          zip -j "nzb-monkey-go_${{ github.ref_name }}-amd64-darwin.zip" builds/macos-amd64/nzb-monkey-go
-
-      - name: Build for macOS (arm64)
-        run: |
-          mkdir -p builds/macos-arm64
-          GOARCH=arm64 GOOS=darwin go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/macos-arm64/nzb-monkey-go
-          zip -j "nzb-monkey-go_${{ github.ref_name }}-arm64-darwin.zip" builds/macos-arm64/nzb-monkey-go
-
-      - name: Build for Windows (amd64)
-        run: |
-          mkdir -p builds/windows-amd64
-          GOARCH=amd64 GOOS=windows go build -ldflags "-X main.version=${{ github.ref_name }}" -o builds/windows-amd64/nzb-monkey-go.exe
-          zip -j "nzb-monkey-go_${{ github.ref_name }}-amd64-windows.zip" builds/windows-amd64/nzb-monkey-go.exe
-
-      - name: Build for Linux (arm)
-        run: |
-          mkdir -p builds/linux-arm
-          GOARCH=arm GOOS=linux go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/linux-arm/nzb-monkey-go
-          zip -j "nzb-monkey-go_${{ github.ref_name }}-arm-linux.zip" builds/linux-arm/nzb-monkey-go
-
-      - name: Build for Linux (arm64)
-        run: |
-          mkdir -p builds/linux-arm64
-          GOARCH=arm64 GOOS=linux go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/linux-arm64/nzb-monkey-go
-          zip -j "nzb-monkey-go_${{ github.ref_name }}-arm64-linux.zip" builds/linux-arm64/nzb-monkey-go
-
-      - name: Build for Linux (armv6)
-        run: |
-          mkdir -p builds/linux-armv6
-          GOARCH=arm GOARM=6 GOOS=linux go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/linux-armv6/nzb-monkey-go
-          zip -j "nzb-monkey-go_${{ github.ref_name }}-armv6-linux.zip" builds/linux-armv6/nzb-monkey-go
-
-      - name: Build for Linux (armv7)
-        run: |
-          mkdir -p builds/linux-armv7
-          GOARCH=arm GOARM=7 GOOS=linux go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/linux-armv7/nzb-monkey-go
-          zip -j "nzb-monkey-go_${{ github.ref_name }}-armv7-linux.zip" builds/linux-armv7/nzb-monkey-go
-
-      - name: Build for Linux (armv8)
-        run: |
-          mkdir -p builds/linux-armv8
-          GOARCH=arm64 GOOS=linux go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/linux-armv8/nzb-monkey-go
-          zip -j "nzb-monkey-go_${{ github.ref_name }}-armv8-linux.zip" builds/linux-armv8/nzb-monkey-go
-
-      - name: Upload Release Assets
+      - name: Upload Release Assets for ${{ matrix.os-arch.name }}
         uses: softprops/action-gh-release@v1
         with:
           files: |
