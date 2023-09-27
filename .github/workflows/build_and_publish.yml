@@ -4,6 +4,7 @@ on:
   release:
     types:
       - created
+  workflow_dispatch:
 
 jobs:
   build-all:
@@ -57,8 +58,23 @@ jobs:
           GOARCH=${{ matrix.os-arch.arch }} GOOS=${{ matrix.os-arch.os }} go build -ldflags="-X main.version=${{ github.ref_name }}" -o builds/${{ matrix.os-arch.name }}/nzb-monkey-go
           zip -j "nzb-monkey-go_${{ github.ref_name }}-${{ matrix.os-arch.arch }}-${{ matrix.os-arch.os }}.zip" builds/${{ matrix.os-arch.name }}/nzb-monkey-go
 
-      - name: Upload Release Assets for ${{ matrix.os-arch.name }}
+#      - name: Upload Release Assets for ${{ matrix.os-arch.name }}
+#        uses: softprops/action-gh-release@v1
+#        with:
+#          files: |
+#            nzb-monkey-go_*-*-*.zip
+
+      - name: Upload Release Assets
+        if: github.event_name == 'release' && github.event.action == 'created'
         uses: softprops/action-gh-release@v1
         with:
           files: |
+            nzb-monkey-go_*-*-*.zip
+
+      - name: Upload Zip Artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v3
+        with:
+          name: builds
+          path: |
             nzb-monkey-go_*-*-*.zip
