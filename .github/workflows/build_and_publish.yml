@@ -59,7 +59,7 @@ jobs:
           else
             ref_name=${{ github.ref_name }}
           fi
-          echo "::set-env name=REF_NAME::${ref_name}"
+          echo "REF_NAME=${ref_name}" >> "$GITHUB_ENV"
       - name: Build for ${{ matrix.os-arch.name }}
         run: |
           mkdir -p builds/${{ matrix.os-arch.name }}
