@@ -32,12 +32,6 @@ jobs:
           - name: Linux-arm64
             os: linux
             arch: arm64
-          - name: FreeBSD-amd64
-            os: freebsd
-            arch: amd64
-          - name: FreeBSD-arm
-            os: freebsd
-            arch: arm
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
