@@ -74,15 +74,15 @@ jobs:
 
       - name: Upload Release Assets
         if: github.event_name == 'release' && github.event.action == 'created'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             nzb-monkey-go_*.zip
 
-      - name: Upload Zip Artifacts
+      - name: Upload Artifact for ${{ matrix.os-arch.name }}
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v3
         with:
-          name: builds
+          name: nzb-monkey-go_${{ env.REF_NAME }}-${{ matrix.os-arch.arch }}-${{ matrix.os-arch.os }}
           path: |
-            nzb-monkey-go_*.zip
+            nzb-monkey-go_${{ env.REF_NAME }}-${{ matrix.os-arch.arch }}-${{ matrix.os-arch.os }}.zip
