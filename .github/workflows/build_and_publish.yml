@@ -53,15 +53,14 @@ jobs:
       - name: Build for ${{ matrix.os-arch.name }}
         run: |
           mkdir -p builds/${{ matrix.os-arch.name }}
-          GOARCH=${{ matrix.os-arch.arch }} GOOS=${{ matrix.os-arch.os }} go build -ldflags="-X main.version=${{ env.REF_NAME }}" -o builds/${{ matrix.os-arch.name }}/nzb-monkey-go
-          zip -j "nzb-monkey-go_${{ env.REF_NAME }}-${{ matrix.os-arch.arch }}-${{ matrix.os-arch.os }}.zip" builds/${{ matrix.os-arch.name }}/nzb-monkey-go
-
-#      - name: Upload Release Assets for ${{ matrix.os-arch.name }}
-#        uses: softprops/action-gh-release@v1
-#        with:
-#          files: |
-#            nzb-monkey-go_*-*-*.zip
-
+          if [ "${{ matrix.os-arch.os }}" == "windows" ]; then
+            # For Windows, add .exe to the binary name
+            binary_name=nzb-monkey-go.exe
+          else
+            binary_name=nzb-monkey-go
+          fi
+          GOARCH=${{ matrix.os-arch.arch }} GOOS=${{ matrix.os-arch.os }} go build -ldflags="-X main.version=${{ env.REF_NAME }}" -o builds/${{ matrix.os-arch.name }}/$binary_name
+          zip -j "nzb-monkey-go_${{ env.REF_NAME }}-${{ matrix.os-arch.arch }}-${{ matrix.os-arch.os }}.zip" builds/${{ matrix.os-arch.name }}/$binary_name
       - name: Upload Release Assets
         if: github.event_name == 'release' && github.event.action == 'created'
         uses: softprops/action-gh-release@v1
@@ -75,4 +74,4 @@ jobs:
         with:
           name: nzb-monkey-go_${{ env.REF_NAME }}-${{ matrix.os-arch.arch }}-${{ matrix.os-arch.os }}
           path: |
-            nzb-monkey-go_${{ env.REF_NAME }}-${{ matrix.os-arch.arch }}-${{ matrix.os-arch.os }}.zip
+            builds/${{ matrix.os-arch.name }}/nzb-monkey-go*
