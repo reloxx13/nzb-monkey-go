@@ -19,15 +19,25 @@ func checkCategories() string {
 
 	if conf.General.Categorize == "auto" {
 		fmt.Println()
+
+		// Get category names from the map and store them in a slice
+		var categoryNames []string
+		for category := range conf.Categories {
+			categoryNames = append(categoryNames, category)
+		}
+
 		Log.Info("Automatic checking for categories ...")
-		for category, regex := range conf.Categories {
-			if categoryRegexp, err := regexp.Compile("(?i)" + regex); err == nil {
-				if categoryRegexp.Match([]byte(args.Title)) {
-					Log.Info("Using category '%s'", category)
-					return category
+		// Iterate over categories in the specified order
+		for _, category := range categoryNames {
+			if regex, ok := conf.Categories[category]; ok {
+				if categoryRegexp, err := regexp.Compile("(?i)" + regex); err == nil {
+					if categoryRegexp.Match([]byte(args.Title)) {
+						Log.Info("Using category '%s'", category)
+						return category
+					}
+				} else {
+					Log.Warn("Error in the Regexp for '%s': %s", category, err.Error())
 				}
-			} else {
-				Log.Warn("Error in the Regexp for '%s'", category)
 			}
 		}
 		Log.Warn("No category did match")
