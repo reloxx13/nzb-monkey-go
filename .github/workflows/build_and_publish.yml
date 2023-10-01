@@ -61,6 +61,7 @@ jobs:
           fi
           GOARCH=${{ matrix.os-arch.arch }} GOOS=${{ matrix.os-arch.os }} go build -ldflags="-s -w -X main.appVersion=${{ env.REF_NAME }}" -o builds/${{ matrix.os-arch.name }}/usr/bin/$binary_name
           zip -j "nzb-monkey-go_${{ env.REF_NAME }}-${{ matrix.os-arch.os }}-${{ matrix.os-arch.arch }}.zip" builds/${{ matrix.os-arch.name }}/usr/bin/$binary_name
+          
           if [ "$GITHUB_EVENT_NAME" == "release" ]; then
             # Makeing deb packages for linux and darwin
             if [ "${{ matrix.os-arch.os }}" == "linux"  ] || [ "${{ matrix.os-arch.os }}" == "darwin"  ]; then
@@ -86,3 +87,11 @@ jobs:
           files: |
             nzb-monkey-go_*.zip
             nzb-monkey-go_*.deb
+            
+      - name: Upload Artifact for ${{ matrix.os-arch.name }}
+        # if: github.event_name == 'workflow_dispatch' # Only on manual trigger
+        uses: actions/upload-artifact@v3
+        with:
+          name: nzb-monkey-go_${{ env.REF_NAME }}-${{ matrix.os-arch.os }}-${{ matrix.os-arch.arch }}
+          path: |
+            builds/${{ matrix.os-arch.name }}/usr/bin/nzb-monkey-go*
