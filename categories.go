@@ -29,7 +29,9 @@ func checkCategories() string {
 		Log.Info("Automatic checking for categories ...")
 		// Iterate over categories in the specified order
 		for _, category := range categoryNames {
+			Log.Info("Testing Regexp for '%s': %s", category)
 			if regex, ok := conf.Categories[category]; ok {
+				Log.Info("Regex for cat is '%s': %s", category, regex)
 				if categoryRegexp, err := regexp.Compile("(?i)" + regex); err == nil {
 					if categoryRegexp.Match([]byte(args.Title)) {
 						Log.Info("Using category '%s'", category)
